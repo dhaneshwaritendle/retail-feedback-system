@@ -1,0 +1,63 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  admin
+  normal_user
+  store_owner
+}
+
+model User {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(60)
+  email      String   @unique @db.VarChar(255)
+  password   String
+  address    String?  @db.VarChar(400)
+  role       UserRole @default(normal_user)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  stores  Store[]
+  ratings Rating[]
+
+  @@map("users")
+}
+
+model Store {
+  id         String   @id @default(uuid())
+  name       String   @db.VarChar(255)
+  address    String   @db.VarChar(400)
+  owner_id   String?
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  owner   User?    @relation(fields: [owner_id], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  ratings Rating[]
+
+  @@map("stores")
+}
+
+model Rating {
+  id         String   @id @default(uuid())
+  rating     Int
+  user_id    String
+  store_id   String
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  user  User  @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  store Store @relation(fields: [store_id], references: [id], onDelete: Cascade, onUpdate: Cascade)
+
+  @@unique([user_id, store_id])
+  @@map("ratings")
+}
